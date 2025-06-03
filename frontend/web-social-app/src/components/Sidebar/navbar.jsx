@@ -1,7 +1,7 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import Dropdown from "./partials/dropdown"; // Importar el componente Dropdown
-import SearchInput from "./partials/SearchInput"; // Importar el componente SearchInput
+import SearchInput from "./partials/searchinput"; // Importar el componente SearchInput
 
 const Navbar = () => {
   // Obtener el estado de autenticación desde Redux

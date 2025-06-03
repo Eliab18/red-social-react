@@ -11,7 +11,7 @@ const CreatePost = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (text.trim()) {
-      dispatch(createPost({ text }));
+      dispatch(createPost({ content: text }));
       setText('');
     }
   };

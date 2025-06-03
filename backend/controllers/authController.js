@@ -11,7 +11,6 @@ const registerUser = async (req, res) => {
   }
 
   const trimmedPassword = password.trim();
-  console.log('Contraseña original (después de trim):', `"${trimmedPassword}"`);
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(trimmedPassword, salt);

@@ -17,7 +17,8 @@ exports.createPost = async (req, res) => {
     });
 
     const savedPost = await newPost.save();
-    res.status(201).json(savedPost);
+    const populatedPost = await Post.findById(savedPost._id).populate('user', 'username');
+    res.status(201).json(populatedPost);
   } catch (error) {
     console.error('Error al crear post:', error);
     res.status(500).json({ message: 'Error interno del servidor' });

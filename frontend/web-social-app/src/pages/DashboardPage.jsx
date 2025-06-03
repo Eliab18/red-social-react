@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { fetchUserData } from '../../src/features/authSlice'; // Importa la acción fetchUserData
+import { fetchPosts } from '../../src/features/postSlice'; // Importa la acción fetchPosts
 import Sidebar from "../components/Sidebar/sidebar"; // Importa el componente Sidebar
 import CreatePost from "../components/inputPost/createPost"; // Importa el componente CreatePost
 import PostList from "../components/layouts/post/postList"; // Importa el componente PostList
 
 const DashboardPage = () => {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const dispatch = useDispatch();
-  const { isAuthenticated, status } = useSelector((state) => state.auth);
+  const { isAuthenticated, status, user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -35,7 +38,7 @@ const DashboardPage = () => {
             <div className="sticky top-0 bg-gray-900 pt-4 pb-2 z-10">
               {user && (
                 <h1 className="text-2xl font-bold text-white">
-                  Hola, {user.username}
+                  Hola, {user?.username}
                 </h1>
               )}
               <CreatePost />

@@ -1,10 +1,16 @@
 // postRoutes.js
 const express = require('express');
-const router = express.Router();
 const { createPost, getPosts } = require('../controllers/postController');
 const authMiddleware = require('../middlewares/authMiddleware');
 
-router.post('/', authMiddleware, createPost);
-router.get('/', authMiddleware, getPosts);
+module.exports = function(io) { // Changed to a function that accepts io
+  const router = express.Router(); // Create router instance inside the function
 
-module.exports = router;
+  // Pass io to the createPost controller function
+  router.post('/', authMiddleware, (req, res) => {
+    createPost(req, res, io); // Pass io here
+  });
+  router.get('/', authMiddleware, getPosts);
+
+  return router; // Return the configured router
+};

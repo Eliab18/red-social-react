@@ -44,7 +44,11 @@ const postSlice = createSlice({
       })
       .addCase(createPost.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.posts.unshift(action.payload);
+        // Add post if it doesn't already exist (e.g., to handle potential race conditions or if socket also sends to creator)
+        const existingPost = state.posts.find(post => post._id === action.payload._id);
+        if (!existingPost) {
+          state.posts.unshift(action.payload);
+        }
       })
       .addCase(createPost.rejected, (state, action) => {
         state.status = 'failed';
@@ -55,11 +59,24 @@ const postSlice = createSlice({
       })
       .addCase(fetchPosts.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.posts = action.payload;
+        state.posts = action.payload; // Assumes fetchPosts brings the whole list
       })
       .addCase(fetchPosts.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.error.message;
+      })
+      // Handle the action dispatched when a new post is received via WebSocket
+      .addCase('posts/addNewPostFromSocket', (state, action) => {
+        // Check if the post already exists to avoid duplicates
+        const existingPost = state.posts.find(post => post._id === action.payload._id);
+        if (!existingPost) {
+          state.posts.unshift(action.payload); // Add new post to the beginning of the array
+          // Optionally, you might want to set status, but it's not strictly an async "operation"
+          // state.status = 'succeeded';
+        } else {
+          // Post already exists, perhaps update it if content can change, or do nothing
+          console.log('Post already exists in store, not adding duplicate from socket:', action.payload._id);
+        }
       });
   },
 });

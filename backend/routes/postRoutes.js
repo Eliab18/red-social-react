@@ -1,6 +1,6 @@
 // postRoutes.js
 const express = require('express');
-const { createPost, getPosts, deletePostById } = require('../controllers/postController'); // Added deletePostById
+const { createPost, getPosts, deletePostById, updatePost } = require('../controllers/postController'); // Added deletePostById and updatePost
 const authMiddleware = require('../middlewares/authMiddleware');
 
 module.exports = function(io) { // Changed to a function that accepts io
@@ -12,11 +12,14 @@ module.exports = function(io) { // Changed to a function that accepts io
   });
   router.get('/', authMiddleware, getPosts);
 
-  // Add the new DELETE route
-  // Note: If deletePostById needed `io` for real-time updates, it would be:
-  // router.delete('/:id', authMiddleware, (req, res) => deletePostById(req, res, io));
-  // But for now, `deletePostById` does not take `io`.
-  router.delete('/:id', authMiddleware, deletePostById);
+  // Route for deleting a post, now passing io
+  router.delete('/:id', authMiddleware, (req, res) => {
+    deletePostById(req, res, io); // Pass io here
+  });
+  // Route for updating a post, now passing io
+  router.put('/:id', authMiddleware, (req, res) => {
+    updatePost(req, res, io); // Pass io here
+  });
 
   return router; // Return the configured router
 };

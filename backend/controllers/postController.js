@@ -59,7 +59,44 @@ exports.createPost = async (req, res, io) => {
   }
 };
 
-exports.deletePostById = async (req, res) => {
+exports.updatePost = async (req, res, io) => { // Added io to params
+  try {
+    const postId = req.params.id;
+    const { content } = req.body;
+
+    if (!content) {
+      return res.status(400).json({ message: 'Content is required' });
+    }
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    if (post.user.toString() !== req.user.userId) {
+      return res.status(401).json({ message: 'User not authorized' });
+    }
+
+    post.content = content;
+    await post.save();
+    await post.populate('user', 'username');
+
+    if (io) {
+      io.emit('post_updated', post); // Emit event with the updated post
+    }
+
+    res.status(200).json(post);
+  } catch (error) {
+    console.error('Error updating post:', error);
+    if (error.name === 'CastError') {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+exports.deletePostById = async (req, res, io) => { // Added io to params
   try {
     const post = await Post.findById(req.params.id);
 
@@ -74,11 +111,9 @@ exports.deletePostById = async (req, res) => {
     }
 
     await Post.findByIdAndDelete(req.params.id);
-    // Optionally, you could emit an event via Socket.IO here if clients need real-time notification of deletions
-    // For example: if (io) { io.emit('post_deleted', { postId: req.params.id }); }
-    // However, the `io` instance is not passed to this controller by default with the current routing setup.
-    // If real-time delete notification is needed, the routing for deletePostById would need to be adjusted
-    // similar to how `createPost` receives `io`. For now, this is omitted.
+    if (io) {
+      io.emit('post_deleted', { postId: req.params.id }); // Emit event
+    }
 
     res.json({ message: 'Post removed successfully' });
 

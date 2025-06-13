@@ -15,7 +15,8 @@ const PostList = () => {
     }
   }, [dispatch, token]);
 
-  if (status === "loading") {
+  // Handle initial loading state (no posts yet)
+  if (status === "loading" && posts.length === 0) {
     return (
       <div className="text-center py-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
@@ -27,12 +28,21 @@ const PostList = () => {
     return <div className="text-red-500 p-4">Error: {error}</div>;
   }
 
-  if (posts.length === 0) {
+  // Handle no posts after initial load (or if list becomes empty)
+  // This condition is now also hit if status is 'succeeded' but posts are empty,
+  // or if status is 'loading' but posts were already present (now falls through to list rendering).
+  if (posts.length === 0) { // If not loading initially and no posts, or if list becomes empty
     return <div className="text-gray-500 p-4">No hay publicaciones aún</div>;
   }
 
+  // Render the list of posts
+  // If status === 'loading' but posts.length > 0, this part will still render,
+  // showing the current posts. The list will update once 'deletePost.fulfilled'
+  // filters the 'posts' array and status changes to 'succeeded'.
   return (
     <div className="space-y-4">
+      {/* Optional: A subtle loading indicator could be placed here if desired when status === 'loading' && posts.length > 0 */}
+      {/* Example: {status === "loading" && posts.length > 0 && <div className="text-center text-sm text-gray-500">Updating...</div>} */}
       {posts.map((post) => (
         <div key={post._id} className="p-4 bg-white rounded-lg shadow relative"> {/* Added relative */}
           {/* Post Options Menu - positioned top-right */}

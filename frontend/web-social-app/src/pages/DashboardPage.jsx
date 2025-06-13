@@ -56,10 +56,32 @@ const DashboardPage = () => {
         dispatch({ type: 'posts/addNewPostFromSocket', payload: post });
       });
 
+      // Listen for deleted posts
+      newSocket.on('post_deleted', (data) => { // data should be { postId: 'some_id' }
+        console.log('Received post_deleted event from server:', data);
+        if (data && data.postId) {
+          dispatch({ type: 'posts/socketPostDeleted', payload: { postId: data.postId } });
+        } else {
+          console.warn('Received post_deleted event without postId:', data);
+        }
+      });
+
+      // Listen for updated posts
+      newSocket.on('post_updated', (updatedPost) => {
+        console.log('Received post_updated event from server:', updatedPost);
+        if (updatedPost && updatedPost._id) {
+          dispatch({ type: 'posts/socketPostUpdated', payload: updatedPost });
+        } else {
+          console.warn('Received post_updated event with invalid data:', updatedPost);
+        }
+      });
+
       // Cleanup on component unmount
       return () => {
         console.log("Disconnecting WebSocket and cleaning up listeners...");
         newSocket.off('new_post'); // Remove listener for 'new_post'
+        newSocket.off('post_deleted'); // Remove listener for 'post_deleted'
+        newSocket.off('post_updated'); // Remove listener for 'post_updated'
         newSocket.disconnect();
         // setSocket(null);
       };

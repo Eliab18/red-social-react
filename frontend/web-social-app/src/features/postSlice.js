@@ -50,12 +50,28 @@ export const deletePost = createAsyncThunk(
   }
 );
 
+export const updatePost = createAsyncThunk(
+  'posts/updatePost',
+  async ({ postId, content }, { getState }) => {
+    const { auth } = getState();
+    const response = await axios.put(`${API_URL}/${postId}`, { content }, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${auth.token}`,
+      },
+    });
+    return response.data;
+  }
+);
+
 const postSlice = createSlice({
   name: 'posts',
   initialState: {
     posts: [],
-    status: 'idle',
-    error: null,
+    status: 'idle', // for fetching posts
+    error: null,    // for fetching posts
+    updateStatus: 'idle', // for updating posts
+    updateError: null,    // for updating posts
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -99,6 +115,22 @@ const postSlice = createSlice({
         state.status = 'failed';
         state.error = action.error.message; // Or a specific error message for deletion
       })
+      // Cases for updatePost
+      .addCase(updatePost.pending, (state) => {
+        state.updateStatus = 'loading';
+        state.updateError = null;
+      })
+      .addCase(updatePost.fulfilled, (state, action) => {
+        state.updateStatus = 'succeeded';
+        const index = state.posts.findIndex(post => post._id === action.payload._id);
+        if (index !== -1) {
+          state.posts[index] = action.payload;
+        }
+      })
+      .addCase(updatePost.rejected, (state, action) => {
+        state.updateStatus = 'failed';
+        state.updateError = action.error.message;
+      })
       // Handle the action dispatched when a new post is received via WebSocket
       .addCase('posts/addNewPostFromSocket', (state, action) => {
         // Check if the post already exists to avoid duplicates
@@ -111,6 +143,19 @@ const postSlice = createSlice({
           // Post already exists, perhaps update it if content can change, or do nothing
           console.log('Post already exists in store, not adding duplicate from socket:', action.payload._id);
         }
+      })
+      .addCase('posts/socketPostDeleted', (state, action) => {
+        // action.payload should be { postId: 'some_id' }
+        state.posts = state.posts.filter(post => post._id !== action.payload.postId);
+      })
+      .addCase('posts/socketPostUpdated', (state, action) => {
+        // action.payload is the entire updated post object
+        const index = state.posts.findIndex(post => post._id === action.payload._id);
+        if (index !== -1) {
+          state.posts[index] = action.payload;
+        }
+        // Optionally, reset updateStatus if it's used to show specific UI feedback for user-initiated updates
+        // state.updateStatus = 'idle'; 
       });
   },
 });

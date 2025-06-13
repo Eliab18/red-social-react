@@ -4,10 +4,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsisH, faTrash, faEdit } from '@fortawesome/free-solid-svg-icons'; // Using faEllipsisH for horizontal dots
 import { deletePost } from '../../../features/postSlice'; // Correct path from src/components/layouts/post/
 import ConfirmDeleteModal from '../../modals/ConfirmDeleteModal'; // Added import
+import EditPostModal from '../../modals/EditPostModal'; // Import EditPostModal
 
 const PostOptionsMenu = ({ post, currentUserId }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false); // Added state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Add state for Edit Modal
   const dispatch = useDispatch();
   const menuRef = useRef(null);
 
@@ -39,9 +41,8 @@ const PostOptionsMenu = ({ post, currentUserId }) => {
   };
 
   const handleEdit = () => {
-    // TODO: Implement edit functionality
-    console.log('Edit post:', post._id);
-    setIsMenuOpen(false); // Close menu after action
+    setIsEditModalOpen(true); // Open the edit modal
+    setIsMenuOpen(false);    // Close the options menu
   };
 
   return (
@@ -83,6 +84,11 @@ const PostOptionsMenu = ({ post, currentUserId }) => {
         onClose={() => setIsConfirmModalOpen(false)}
         onConfirm={handleConfirmDelete}
         itemName="post"
+      />
+      <EditPostModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        post={post}
       />
     </>
   );

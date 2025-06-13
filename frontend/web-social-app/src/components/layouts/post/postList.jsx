@@ -1,11 +1,13 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPosts } from "../../../features/postSlice";
+import PostOptionsMenu from './PostOptionsMenu'; // Corrected path
 
 const PostList = () => {
   const dispatch = useDispatch();
   const { posts, status, error } = useSelector((state) => state.posts);
-  const { token } = useSelector((state) => state.auth);
+  // const { token } = useSelector((state) => state.auth); // Already exists
+  const { user: currentUser, token } = useSelector((state) => state.auth); // Add this to get the full user object
 
   useEffect(() => {
     if (token) {
@@ -32,7 +34,13 @@ const PostList = () => {
   return (
     <div className="space-y-4">
       {posts.map((post) => (
-        <div key={post._id} className="p-4 bg-white rounded-lg shadow">
+        <div key={post._id} className="p-4 bg-white rounded-lg shadow relative"> {/* Added relative */}
+          {/* Post Options Menu - positioned top-right */}
+          <div className="absolute top-2 right-2"> {/* Wrapper for positioning */}
+            <PostOptionsMenu post={post} currentUserId={currentUser?._id} />
+          </div>
+
+          {/* Existing post content */}
           <div className="flex items-center mb-2">
             <span className="font-semibold">
               {post.user?.username || "Usuario desconocido"}

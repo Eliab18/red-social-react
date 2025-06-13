@@ -59,6 +59,39 @@ exports.createPost = async (req, res, io) => {
   }
 };
 
+exports.deletePostById = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    // Check user ownership
+    // req.user is populated by authMiddleware as { userId: decoded.userId }
+    if (post.user.toString() !== req.user.userId) {
+      return res.status(401).json({ message: 'User not authorized to delete this post' });
+    }
+
+    await Post.findByIdAndDelete(req.params.id);
+    // Optionally, you could emit an event via Socket.IO here if clients need real-time notification of deletions
+    // For example: if (io) { io.emit('post_deleted', { postId: req.params.id }); }
+    // However, the `io` instance is not passed to this controller by default with the current routing setup.
+    // If real-time delete notification is needed, the routing for deletePostById would need to be adjusted
+    // similar to how `createPost` receives `io`. For now, this is omitted.
+
+    res.json({ message: 'Post removed successfully' });
+
+  } catch (err) {
+    console.error('Error in deletePostById:', err.message);
+    // Check if the error is due to an invalid ObjectId format
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ message: 'Post not found (invalid ID format)' });
+    }
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
 // getPosts remains the same
 exports.getPosts = async (req, res) => {
   try {

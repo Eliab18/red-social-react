@@ -29,6 +29,27 @@ export const fetchPosts = createAsyncThunk(
   }
 );
 
+export const deletePost = createAsyncThunk(
+  'posts/deletePost',
+  async (postId, { getState }) => {
+    const { auth } = getState();
+    // The API_URL is 'http://localhost:8080/api/posts'
+    // The endpoint for deleting a specific post should be `${API_URL}/${postId}`
+    const response = await axios.delete(`${API_URL}/${postId}`, {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+    });
+    // Assuming the backend returns the deleted post's ID or some confirmation
+    // For the reducer, we mainly need the postId to remove it from the state.
+    // If response.data contains the id, use it, otherwise return the original postId.
+    // Let's assume backend returns { _id: postId } or similar upon successful deletion.
+    // Or if it returns nothing (204 No Content), we still have postId.
+    // For simplicity, we'll return the original postId to the reducer.
+    return postId;
+  }
+);
+
 const postSlice = createSlice({
   name: 'posts',
   initialState: {
@@ -64,6 +85,19 @@ const postSlice = createSlice({
       .addCase(fetchPosts.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.error.message;
+      })
+      // Add deletePost cases here
+      .addCase(deletePost.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(deletePost.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        // action.payload will be the postId
+        state.posts = state.posts.filter(post => post._id !== action.payload);
+      })
+      .addCase(deletePost.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.error.message; // Or a specific error message for deletion
       })
       // Handle the action dispatched when a new post is received via WebSocket
       .addCase('posts/addNewPostFromSocket', (state, action) => {

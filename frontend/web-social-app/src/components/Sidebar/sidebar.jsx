@@ -9,10 +9,11 @@ import {
   faCog,
   faChevronDown,
   faXmark,
-  faArrowRight
+  faArrowRight,
+  faPlus // Add this icon
 } from '@fortawesome/free-solid-svg-icons';
 
-const Sidebar = ({ isCollapsed, onToggle }) => {
+const Sidebar = ({ isCollapsed, onToggle, openCreatePostModal }) => {
   const [expandedSections, setExpandedSections] = useState({}); // Estado para manejar secciones desplegables
 
   // Función para expandir/colapsar una sección
@@ -154,6 +155,15 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
           <FontAwesomeIcon icon={faCog} />
           {!isCollapsed && <span>Configuración</span>}
         </a>
+
+        {/* Create Post Button */}
+        <button
+          onClick={openCreatePostModal}
+          className="flex items-center space-x-4 px-4 py-3 mt-4 hover:bg-gray-800 transition duration-200 bg-blue-600 hover:bg-blue-700 rounded-lg mx-4" // Added some distinct styling
+        >
+          <FontAwesomeIcon icon={faPlus} />
+          {!isCollapsed && <span className="font-semibold">Crear Post</span>}
+        </button>
       </div>
     </div>
   );

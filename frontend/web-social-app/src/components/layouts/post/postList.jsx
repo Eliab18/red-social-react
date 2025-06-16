@@ -64,6 +64,29 @@ const PostList = () => {
             </span>
           </div>
           <p className="text-gray-800">{post.content}</p> {/* Cambiado de text a content */}
+
+          {/* Display Photos */}
+          {post.photos && post.photos.length > 0 && (
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+              {post.photos.map((photoPath, index) => {
+                // IMPORTANT: Construct the correct image URL.
+                // Backend is on http://localhost:5000 and serves /uploads statically.
+                // photoPath is expected to be like 'uploads/post_photos/filename.jpg'.
+                const imageUrl = `http://localhost:5000/${photoPath.replace(/\\/g, '/')}`;
+                return (
+                  <div key={index} className="aspect-w-1 aspect-h-1"> {/* Optional: for consistent aspect ratio */}
+                    <img
+                      src={imageUrl}
+                      alt={`Post photo ${index + 1}`}
+                      className="object-cover w-full h-full rounded-lg shadow" // Ensure image covers the area
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Likes count */}
           <div className="mt-2 text-gray-500">
             {post.likes?.length || 0} Me gusta
           </div>

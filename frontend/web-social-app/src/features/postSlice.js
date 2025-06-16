@@ -5,14 +5,29 @@ const API_URL = 'http://localhost:8080/api/posts';
 
 export const createPost = createAsyncThunk(
   'posts/createPost',
-  async (postData, { getState }) => {
-    const { auth } = getState();
-    const response = await axios.post(API_URL, postData, {
-      headers: {
-        Authorization: `Bearer ${auth.token}`,
-      },
-    });
-    return response.data;
+  async (formData, { getState, rejectWithValue }) => { // formData is now the argument
+    try {
+      const { auth } = getState(); // Get token for authorization
+
+      // When sending FormData, axios (and fetch) usually set the Content-Type
+      // to 'multipart/form-data' automatically, including the boundary.
+      // So, you might not need to set 'Content-Type' manually.
+      // However, Authorization header is still needed.
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${auth.token}`,
+          // 'Content-Type': 'multipart/form-data' // Usually not needed to set explicitly with FormData
+        },
+      };
+
+      // Ensure the endpoint is correct, e.g., '/api/posts' which is API_URL
+      const response = await axios.post(API_URL, formData, config);
+      return response.data; // The backend should return the created post object
+    } catch (error) {
+      // Handle error, perhaps extracting a message from error.response.data
+      const message = error.response?.data?.message || error.message || 'Failed to create post';
+      return rejectWithValue(message);
+    }
   }
 );
 

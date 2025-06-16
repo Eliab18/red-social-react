@@ -1,6 +1,28 @@
 // controllers/postController.js
 const Post = require('../models/Post');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
+// Ensure the uploads directory exists
+const uploadDir = path.join(__dirname, '..', 'uploads', 'post_photos');
+if (!fs.existsSync(uploadDir)){
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Multer storage configuration
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
+
+// Keep existing createPost logic, but integrate photo handling
 exports.createPost = async (req, res, io) => {
   console.log('[CREATE_POST_DEBUG] Entered createPost function.'); // New log
 
@@ -8,18 +30,28 @@ exports.createPost = async (req, res, io) => {
     const { content } = req.body;
     console.log('[CREATE_POST_DEBUG] Request body content:', content); // New log
     
+    // Content validation (text is optional if photos are present, or vice-versa)
+    // This example assumes content is still required, adjust as per actual product requirements
     if (!content || content.trim().length === 0) {
-      console.log('[CREATE_POST_DEBUG] Content validation failed.'); // New log
+      console.log('[CREATE_POST_DEBUG] Content validation failed.');
       return res.status(400).json({ message: 'El contenido es requerido' });
     }
 
-    console.log('[CREATE_POST_DEBUG] User ID from req.user:', req.user.userId); // New log
+    console.log('[CREATE_POST_DEBUG] User ID from req.user:', req.user.userId);
+
+    let photoPaths = [];
+    if (req.files && req.files.length > 0) {
+      photoPaths = req.files.map(file => path.join('uploads', 'post_photos', file.filename));
+      console.log('[CREATE_POST_DEBUG] Photo paths:', photoPaths);
+    }
+
     let newPost = new Post({
       content: content.trim(),
-      user: req.user.userId
+      user: req.user.userId,
+      photos: photoPaths // Add photo paths here
     });
 
-    console.log('[CREATE_POST_DEBUG] Attempting to save new post...'); // New log
+    console.log('[CREATE_POST_DEBUG] Attempting to save new post...');
     let savedPost = await newPost.save();
     console.log('[CREATE_POST_DEBUG] Post saved, ID:', savedPost._id); // New log
     
@@ -108,6 +140,23 @@ exports.deletePostById = async (req, res, io) => { // Added io to params
     // req.user is populated by authMiddleware as { userId: decoded.userId }
     if (post.user.toString() !== req.user.userId) {
       return res.status(401).json({ message: 'User not authorized to delete this post' });
+    }
+
+    // Optional: Delete photos from the filesystem when a post is deleted
+    if (post.photos && post.photos.length > 0) {
+      post.photos.forEach(photoPath => {
+        // Assuming photoPath is relative like 'uploads/post_photos/filename.jpg'
+        // and __dirname is 'backend/controllers'
+        const fullPath = path.join(__dirname, '..', photoPath);
+        fs.unlink(fullPath, err => {
+          if (err) {
+            console.error(`Error deleting photo ${fullPath}:`, err);
+            // Decide if this error should halt the process or just be logged
+          } else {
+            console.log(`Successfully deleted photo ${fullPath}`);
+          }
+        });
+      });
     }
 
     await Post.findByIdAndDelete(req.params.id);

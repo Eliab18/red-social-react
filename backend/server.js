@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const cors = require('cors');
 const http = require('http'); // Added
 const { Server } = require("socket.io"); // Added
+const path = require('path'); // Ensure path is required
 
 const authRoutes = require("./routes/authRoutes");
 const initializePostRoutes = require("./routes/postRoutes"); // New way
@@ -28,6 +29,12 @@ app.use(express.json());
 app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:5173" // Use environment variable for frontend URL
 }));
+
+// Serve static files from the 'uploads' directory
+// This makes files in 'backend/uploads/' accessible via URLs like 'http://localhost:PORT/uploads/filename.jpg'
+// For example, a request to '/uploads/post_photos/image.jpg'
+// will serve the file 'backend/uploads/post_photos/image.jpg'.
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Rutas de autenticación
 app.use("/api/auth", authRoutes);
